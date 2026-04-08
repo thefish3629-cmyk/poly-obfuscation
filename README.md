@@ -137,6 +137,16 @@ streamlit run dashboard.py
 | High volume anomaly | 10 |
 | Timing anomaly | 5 |
 
+## Knowledge Base
+
+Reference docs in [`kb/`](kb/):
+
+- **[kb/01_crypto/](kb/01_crypto/)** - DeFi concepts, token standards, smart contracts
+- **[kb/02_apis/](kb/02_apis/)** - API references (Polymarket, Dune, Goldsky, Polygon RPC)
+- **[kb/03_polymarket/](kb/03_polymarket/)** - Platform docs
+- **[kb/04_analysis/](kb/04_analysis/)** - Detection methods & risk scoring
+- **[kb/05_projects/](kb/05_projects/)** - Project linking
+
 ## License
 
 MIT
