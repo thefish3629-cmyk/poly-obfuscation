@@ -7,9 +7,13 @@ logger = setup_logging("polymarket_api")
 
 
 class PolymarketClient:
-    GAMMA_BASE = "https://gamma.polymarket.com"
+    # Use data-api as primary (gamma-api may not resolve in some environments)
+    GAMMA_BASE = "https://data-api.polymarket.com"
     API_BASE = "https://clob.polymarket.com"
     DATA_BASE = "https://data-api.polymarket.com"
+    # Fallback endpoints
+    FALLBACK_BASE = "https://api.polymarket.com"
+    CLOBBASE = "https://clob.polymarket.com"
     
     def __init__(self):
         self.session = requests.Session()
@@ -20,25 +24,26 @@ class PolymarketClient:
     
     def search_markets(self, query: str) -> List[Dict]:
         """Search for markets by question text."""
-        try:
-            response = self.session.get(
-                f"{self.GAMMA_BASE}/markets",
-                params={"question": query, "limit": 10}
-            )
-            response.raise_for_status()
-            return response.json()
-        except requests.exceptions.HTTPError:
-            logger.warning(f"Search failed for '{query}', trying alternative endpoint")
+        endpoints = [
+            (self.GAMMA_BASE, "/markets"),
+            (self.FALLBACK_BASE, "/markets"),
+            (self.CLOBBASE, "/markets"),
+        ]
+        
+        for base, path in endpoints:
             try:
                 response = self.session.get(
-                    "https://api.polymarket.com/markets",
-                    params={"question": query}
+                    f"{base}{path}",
+                    params={"question": query, "limit": 10}
                 )
-                response.raise_for_status()
-                return response.json()
+                if response.status_code == 200:
+                    return response.json()
             except Exception as e:
-                logger.error(f"Market search failed: {e}")
-                return []
+                logger.warning(f"Failed {base}: {e}")
+                continue
+        
+        logger.error(f"Market search failed for '{query}' - all endpoints failed")
+        return []
     
     def get_market_by_slug(self, slug: str) -> Optional[Dict]:
         """Get market details by slug."""
