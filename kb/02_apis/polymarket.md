@@ -501,7 +501,9 @@ def get_markets_with_fallback(query, limit=10):
 
 | Endpoint | Limit | Notes |
 |----------|-------|-------|
-| /markets | 10 req/sec | Search queries |
+| /trades (data-api) | 10 req/sec | Works reliably |
+| /positions | 5 req/sec | Works reliably |
+| /markets (gamma) | 10 req/sec | May fail in some DNS environments |
 | /trades | 10 req/sec | Historical data |
 | /positions | 5 req/sec | User data |
 | /order-book | 5 req/sec | Real-time data |
