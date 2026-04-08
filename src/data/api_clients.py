@@ -7,13 +7,12 @@ logger = setup_logging("polymarket_api")
 
 
 class PolymarketClient:
-    # Use data-api as primary (gamma-api may not resolve in some environments)
-    GAMMA_BASE = "https://data-api.polymarket.com"
+    # Primary endpoints (in order of reliability)
+    GAMMA_BASE = "https://clob.polymarket.com"  # Works for markets
+    DATA_BASE = "https://data-api.polymarket.com"  # Works for trades
     API_BASE = "https://clob.polymarket.com"
-    DATA_BASE = "https://data-api.polymarket.com"
-    # Fallback endpoints
-    FALLBACK_BASE = "https://api.polymarket.com"
-    CLOBBASE = "https://clob.polymarket.com"
+    # Fallbacks
+    FALLBACK_BASE = "https://data-api.polymarket.com"
     
     def __init__(self):
         self.session = requests.Session()
@@ -24,10 +23,10 @@ class PolymarketClient:
     
     def search_markets(self, query: str) -> List[Dict]:
         """Search for markets by question text."""
+        # Try clob first (works!), then data-api, then fallback
         endpoints = [
-            (self.GAMMA_BASE, "/markets"),
-            (self.FALLBACK_BASE, "/markets"),
-            (self.CLOBBASE, "/markets"),
+            ("https://clob.polymarket.com", "/markets"),
+            ("https://data-api.polymarket.com", "/markets"),
         ]
         
         for base, path in endpoints:
@@ -37,12 +36,16 @@ class PolymarketClient:
                     params={"question": query, "limit": 10}
                 )
                 if response.status_code == 200:
-                    return response.json()
+                    data = response.json()
+                    # Handle both formats: {"data": [...]} or [...]} 
+                    if isinstance(data, dict) and "data" in data:
+                        return data["data"]
+                    return data
             except Exception as e:
                 logger.warning(f"Failed {base}: {e}")
                 continue
         
-        logger.error(f"Market search failed for '{query}' - all endpoints failed")
+        logger.error(f"Market search failed for '{query}'")
         return []
     
     def get_market_by_slug(self, slug: str) -> Optional[Dict]:
